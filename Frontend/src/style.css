@@ -1,0 +1,118 @@
+@import "sanitize.css";
+body {
+  background: white;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+button,
+select {
+  padding: 1rem;
+  border-radius: 2rem;
+  border-style: none;
+}
+button:hover,
+select:hover {
+  cursor: pointer;
+}
+button.filled,
+select.filled {
+  background: hsl(246, 100%, 76%);
+}
+button.filled-tonal,
+select.filled-tonal {
+  background: hsl(246, 100%, 86%);
+}
+button.outlined,
+select.outlined {
+  border: 1px solid;
+  background: none;
+}
+button.outlined:hover,
+select.outlined:hover {
+  background: #f2f2f2;
+}
+button.text,
+select.text {
+  background: none;
+  color: hsl(246, 100%, 76%);
+}
+button.text:hover,
+select.text:hover {
+  color: inherit;
+}
+.content-control {
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+.main {
+  display: flex;
+  gap: 1rem;
+  flex-direction: row;
+  align-items: stretch;
+  padding: 1rem;
+}
+.left-sidebar {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+  padding-right: 1rem;
+}
+.todos-area {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+  flex-grow: 1;
+}
+.todo {
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+}
+.todo.open {
+  background-color: #f2f2f2;
+}
+.todo.discarded {
+  background-color: #f2f2f2;
+  text-decoration: line-through;
+}
+.todo.done {
+  background-color: #d3ffd6;
+}
+.content-area {
+  display: flex;
+  gap: 1rem;
+  flex-direction: row;
+  align-items: stretch;
+  flex-grow: 2;
+}
+.one-on-ones {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+  flex-grow: 2;
+}
+.one-on-one {
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background-color: #f2f2f2;
+}
+.topics {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+  flex-grow: 1;
+}
+.topic {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+}
+.question {
+  border-bottom: solid 1px #cccccc;
+}
+.topic-suggestions {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+}

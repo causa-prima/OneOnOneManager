@@ -1,0 +1,124 @@
+@import "sanitize.css";
+@gutter-size: 1rem;
+
+#colors() {
+  primary: hsl(246, 100%, 76%);
+  secondary: lighten($primary, 10%);
+  done: rgb(211, 255, 214);
+  background: white;
+  elevated: darken($background, 5%);
+  highlight: darken($background, 20%);
+}
+
+body {
+  background: #colors[background];
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+button,
+select {
+  padding: 1rem;
+  border-radius: 2rem;
+  border-style: none;
+  &:hover {
+    cursor: pointer;
+  }
+  &.filled {
+    background: #colors[primary];
+  }
+  &.filled-tonal {
+    background: #colors[secondary];
+  }
+  &.outlined {
+    border: 1px solid;
+    background: none;
+    &:hover {
+      background: #colors[elevated];
+    }
+  }
+  &.text {
+    background: none;
+    color: #colors[primary];
+    &:hover {
+      color: inherit;
+    }
+  }
+  &.elevated {
+    //box-shadow: ;
+  }
+}
+
+.flex (@flex-direction: column) {
+  display: flex;
+  gap: @gutter-size;
+  flex-direction: @flex-direction;
+}
+
+.content-control {
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.main {
+  .flex(row);
+  align-items: stretch;
+  padding: @gutter-size;
+}
+
+.left-sidebar {
+  .flex();
+  padding-right: @gutter-size;
+}
+
+.todos-area {
+  .flex();
+  flex-grow: 1;
+}
+
+.todo {
+  .content-control();
+  .flex();
+  &.open {
+    background-color: #colors[elevated];
+  }
+  &.discarded {
+    background-color: #colors[elevated];
+    text-decoration: line-through;
+  }
+  &.done {
+    background-color: #colors[done];
+  }
+}
+
+.content-area {
+  .flex(row);
+  align-items: stretch;
+  flex-grow: 2;
+}
+
+.one-on-ones {
+  .flex();
+  flex-grow: 2;
+}
+
+.one-on-one {
+  .content-control();
+  background-color: #colors[elevated];
+}
+
+.topics {
+  .flex();
+  flex-grow: 1;
+}
+
+.topic {
+  .flex();
+}
+
+.question {
+  border-bottom: solid 1px #colors[highlight];
+}
+
+.topic-suggestions {
+  .flex();
+}
