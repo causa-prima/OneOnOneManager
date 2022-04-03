@@ -55,6 +55,7 @@ select.text:hover {
   gap: 1rem;
   flex-direction: column;
   padding-right: 1rem;
+  flex-grow: 1;
 }
 .todos-area {
   display: flex;
@@ -84,7 +85,7 @@ select.text:hover {
   gap: 1rem;
   flex-direction: row;
   align-items: stretch;
-  flex-grow: 2;
+  flex-grow: 4;
 }
 .one-on-ones {
   display: flex;
@@ -115,4 +116,5 @@ select.text:hover {
   display: flex;
   gap: 1rem;
   flex-direction: column;
+  flex-grow: 1;
 }
