@@ -32,10 +32,14 @@ data Todo = Todo
 
 $(deriveJSON defaultOptions ''Todo)
 
-data Topic = Topic
+data TopicContent = TopicContent
   { question :: String
   , answer :: String
   } deriving (Eq, Show)
+
+$(deriveJSON defaultOptions ''TopicContent)
+
+data Topic = ManagerTopic TopicContent | EmployeeTopic TopicContent deriving (Eq, Show)
 
 $(deriveJSON defaultOptions ''Topic)
 
@@ -73,8 +77,8 @@ employees = [ Employee 1 "Johannes Klepp"
         ]
 
 oneOnOnes :: Int -> Handler [OneOnOne]
-oneOnOnes 1 = return [OneOnOne 1 1647039600000 [Topic "Was macht dich zufrieden?" "Nix", Topic "Welche Fähigkeiten würdest du gerne lernen / verbessern?" "Vieles"], OneOnOne 1 1645225200000 []]
-oneOnOnes 3 = return [OneOnOne 1 1645052400000 [Topic "Welche Fähigkeiten würdest du gerne lernen / verbessern?" "Nix", Topic "Was macht dich zufrieden?" "Vieles"]]
+oneOnOnes 1 = return [OneOnOne 1 1647039600000 [ManagerTopic (TopicContent "Was macht dich zufrieden?" "Nix"), ManagerTopic (TopicContent "Welche Fähigkeiten würdest du gerne lernen / verbessern?" "Vieles")], OneOnOne 1 1645225200000 []]
+oneOnOnes 3 = return [OneOnOne 1 1645052400000 [EmployeeTopic (TopicContent "Welche Fähigkeiten kann ich verbessern?" "Nix"), ManagerTopic (TopicContent "Was macht dich zufrieden?" "Vieles")]]
 oneOnOnes _ = return []
 
 todos :: Int -> Handler [Todo]

@@ -109,6 +109,12 @@ select.text:hover {
   gap: 1rem;
   flex-direction: column;
 }
+.manager-topic {
+  background-color: red;
+}
+.employee-topic {
+  background-color: blue;
+}
 .question {
   border-bottom: solid 1px #cccccc;
 }

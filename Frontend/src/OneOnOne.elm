@@ -59,8 +59,13 @@ type alias DateTime =
     ( Time.Posix, Time.Zone )
 
 
-type alias Topic =
+type alias TopicContent =
     { question : String, answer : String }
+
+
+type Topic
+    = ManagerTopic TopicContent
+    | EmployeeTopic TopicContent
 
 
 type alias Topics =
@@ -319,7 +324,16 @@ getTopicsPresentation topics =
 
 getTopicPresentation : Topic -> Html Msg
 getTopicPresentation topic =
-    div [ class "topic" ] [ input [ class "question", value topic.question ] [], textarea [ class "answer", value topic.answer ] [] ]
+    let
+        ( topicClass, topicContent ) =
+            case topic of
+                ManagerTopic tc ->
+                    ( "manager-topic", tc )
+
+                EmployeeTopic tc ->
+                    ( "employee-topic", tc )
+    in
+    div [ class "topic", class topicClass ] [ input [ class "question", value topicContent.question ] [], textarea [ class "answer", value topicContent.answer ] [] ]
 
 
 topicSuggestionsContent : List (Html Msg)
@@ -470,10 +484,41 @@ topicsDecoder =
     Json.Decode.list topicDecoder
 
 
+topicContentDecoder : Json.Decode.Decoder TopicContent
+topicContentDecoder =
+    Json.Decode.field "contents" (Json.Decode.map2 TopicContent (Json.Decode.field "question" Json.Decode.string) (Json.Decode.field "answer" Json.Decode.string))
+
+
 topicDecoder : Json.Decode.Decoder Topic
 topicDecoder =
-    Json.Decode.map2 Topic (Json.Decode.field "question" Json.Decode.string) (Json.Decode.field "answer" Json.Decode.string)
+    Json.Decode.field "tag" Json.Decode.string
+        |> Json.Decode.andThen
+            (\value ->
+                case value of
+                    "ManagerTopic" ->
+                        Json.Decode.map ManagerTopic topicContentDecoder
+
+                    "EmployeeTopic" ->
+                        Json.Decode.map EmployeeTopic topicContentDecoder
+
+                    somethingElse ->
+                        Json.Decode.fail <| "Unknown topic tag: " ++ somethingElse
+            )
 
 
 emptyHtml =
     text ""
+
+
+loggingDecoder : Json.Decode.Decoder a -> Json.Decode.Decoder a
+loggingDecoder realDecoder =
+    Json.Decode.value
+        |> Json.Decode.andThen
+            (\value ->
+                case Json.Decode.decodeValue realDecoder value of
+                    Ok decoded ->
+                        Json.Decode.succeed decoded
+
+                    Err error ->
+                        Json.Decode.fail <| Debug.log "decode error" (Json.Decode.errorToString error)
+            )
