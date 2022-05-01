@@ -2,6 +2,7 @@ module OneOnOne exposing (..)
 
 import Browser
 import Debug exposing (toString)
+import Enums
 import Html exposing (Attribute, Html, button, div, input, option, select, span, text, textarea)
 import Html.Attributes exposing (class, classList, placeholder, selected, type_, value)
 import Html.Events
@@ -48,7 +49,7 @@ type TodoState
 
 
 type alias Todo =
-    { text : String, state : TodoState, note : Maybe String }
+    { text : String, state : TodoState, note : Maybe String, toBeImplementedBy : Enums.Target }
 
 
 type alias Todos =
@@ -59,13 +60,8 @@ type alias DateTime =
     ( Time.Posix, Time.Zone )
 
 
-type alias TopicContent =
-    { question : String, answer : String }
-
-
-type Topic
-    = ManagerTopic TopicContent
-    | EmployeeTopic TopicContent
+type alias Topic =
+    { question : String, answer : String, putOnAgendaBy : Enums.Source }
 
 
 type alias Topics =
@@ -281,8 +277,16 @@ getTodoPresentation todo =
 
                 Done ->
                     ( "done", True )
+
+        todoTargetClass =
+            case todo.toBeImplementedBy of
+                Enums.Manager ->
+                    ( "manager-todo", True )
+
+                Enums.Employee ->
+                    ( "employee-todo", True )
     in
-    div [ classList [ ( "todo", True ), todoStateClass ] ] [ input [ value todo.text ] [], input [ placeholder "Notiz", value maybeNote ] [] ]
+    div [ classList [ ( "todo", True ), todoStateClass, todoTargetClass ] ] [ input [ value todo.text ] [], input [ placeholder "Notiz", value maybeNote ] [] ]
 
 
 getContentAreaContent : OneOnOnes -> SelectedEmployee -> List (Html Msg)
@@ -325,15 +329,15 @@ getTopicsPresentation topics =
 getTopicPresentation : Topic -> Html Msg
 getTopicPresentation topic =
     let
-        ( topicClass, topicContent ) =
-            case topic of
-                ManagerTopic tc ->
-                    ( "manager-topic", tc )
+        topicClass =
+            case topic.putOnAgendaBy of
+                Enums.Manager ->
+                    "manager-topic"
 
-                EmployeeTopic tc ->
-                    ( "employee-topic", tc )
+                Enums.Employee ->
+                    "employee-topic"
     in
-    div [ class "topic", class topicClass ] [ input [ class "question", value topicContent.question ] [], textarea [ class "answer", value topicContent.answer ] [] ]
+    div [ class "topic", class topicClass ] [ input [ class "question", value topic.question ] [], textarea [ class "answer", value topic.answer ] [] ]
 
 
 topicSuggestionsContent : List (Html Msg)
@@ -437,7 +441,7 @@ todosDecoder =
 
 todoDecoder : Json.Decode.Decoder Todo
 todoDecoder =
-    Json.Decode.map3 Todo (Json.Decode.field "text" Json.Decode.string) (Json.Decode.field "state" stateDecoder) (Json.Decode.maybe (Json.Decode.field "note" Json.Decode.string))
+    Json.Decode.map4 Todo (Json.Decode.field "text" Json.Decode.string) (Json.Decode.field "state" stateDecoder) (Json.Decode.maybe (Json.Decode.field "note" Json.Decode.string)) (Json.Decode.field "toBeImplementedBy" sourceDecoder)
 
 
 stateDecoder : Json.Decode.Decoder TodoState
@@ -484,25 +488,25 @@ topicsDecoder =
     Json.Decode.list topicDecoder
 
 
-topicContentDecoder : Json.Decode.Decoder TopicContent
-topicContentDecoder =
-    Json.Decode.field "contents" (Json.Decode.map2 TopicContent (Json.Decode.field "question" Json.Decode.string) (Json.Decode.field "answer" Json.Decode.string))
-
-
 topicDecoder : Json.Decode.Decoder Topic
 topicDecoder =
-    Json.Decode.field "tag" Json.Decode.string
+    Json.Decode.map3 Topic (Json.Decode.field "question" Json.Decode.string) (Json.Decode.field "answer" Json.Decode.string) (Json.Decode.field "putOnAgendaBy" sourceDecoder)
+
+
+sourceDecoder : Json.Decode.Decoder Enums.Source
+sourceDecoder =
+    Json.Decode.string
         |> Json.Decode.andThen
             (\value ->
                 case value of
-                    "ManagerTopic" ->
-                        Json.Decode.map ManagerTopic topicContentDecoder
+                    "Manager" ->
+                        Json.Decode.succeed Enums.Manager
 
-                    "EmployeeTopic" ->
-                        Json.Decode.map EmployeeTopic topicContentDecoder
+                    "Employee" ->
+                        Json.Decode.succeed Enums.Employee
 
                     somethingElse ->
-                        Json.Decode.fail <| "Unknown topic tag: " ++ somethingElse
+                        Json.Decode.fail <| "Unknown Source: " ++ somethingElse
             )
 
 

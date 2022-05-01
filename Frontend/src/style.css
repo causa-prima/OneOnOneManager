@@ -109,11 +109,15 @@ select.text:hover {
   gap: 1rem;
   flex-direction: column;
 }
-.manager-topic {
+.manager-topic::before,
+.manager-todo::before {
   background-color: red;
+  content: "M"
 }
-.employee-topic {
-  background-color: blue;
+.employee-topic::before,
+.employee-todo::before {
+  background-color: cornflowerblue;
+  content: "E";
 }
 .question {
   border-bottom: solid 1px #cccccc;
