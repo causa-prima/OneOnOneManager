@@ -48,6 +48,13 @@ select {
   }
 }
 
+button {
+  &.material-symbols-outlined {
+    background: none;
+    padding: 0 1rem 0 0;
+  }
+}
+
 .flex (@flex-direction: column) {
   display: flex;
   gap: @gutter-size;
@@ -102,7 +109,8 @@ select {
   flex-grow: 2;
 }
 
-.one-on-one {
+.one-on-one,
+.topic-suggestion {
   .content-control();
   background-color: #colors[elevated];
 }

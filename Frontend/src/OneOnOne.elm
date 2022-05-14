@@ -80,10 +80,18 @@ type alias SelectedEmployee =
     Maybe Employee
 
 
+type alias TopicSuggestion =
+    { suggestedQuestion : String, lastAsked : Maybe DateTime }
+
+
+type alias TopicSuggestions =
+    List TopicSuggestion
+
+
 type Model
     = Loading
     | Failure
-    | Success { employees : Employees, selectedEmployee : SelectedEmployee, todos : Todos, oneOnOnes : OneOnOnes }
+    | Success { employees : Employees, selectedEmployee : SelectedEmployee, todos : Todos, oneOnOnes : OneOnOnes, topicSuggestions : TopicSuggestions }
 
 
 init : () -> ( Model, Cmd Msg )
@@ -99,6 +107,7 @@ type Msg
     = GotEmployees (Result Http.Error Employees)
     | GotOneOnOnes (Result Http.Error OneOnOnes)
     | GotTodos (Result Http.Error Todos)
+    | GotTopicSuggestions (Result Http.Error TopicSuggestions)
     | EmployeeSelectionChanged SelectedEmployee
 
 
@@ -108,7 +117,7 @@ update msg model =
         GotEmployees result ->
             case result of
                 Ok loadedEmployees ->
-                    ( Success { employees = sortBy .name loadedEmployees, selectedEmployee = Nothing, todos = [], oneOnOnes = [] }, Cmd.none )
+                    ( Success { employees = sortBy .name loadedEmployees, selectedEmployee = Nothing, todos = [], oneOnOnes = [], topicSuggestions = [] }, Cmd.none )
 
                 Err _ ->
                     ( Failure, Cmd.none )
@@ -139,10 +148,23 @@ update msg model =
                 Err _ ->
                     ( Failure, Cmd.none )
 
+        GotTopicSuggestions result ->
+            case result of
+                Ok loadedTopicSuggestions ->
+                    case model of
+                        Success oldModelContent ->
+                            ( Success { oldModelContent | topicSuggestions = loadedTopicSuggestions }, Cmd.none )
+
+                        other ->
+                            ( other, Cmd.none )
+
+                Err _ ->
+                    ( Failure, Cmd.none )
+
         EmployeeSelectionChanged selectedEmployee ->
             case model of
                 Success oldModelContent ->
-                    ( Success { oldModelContent | selectedEmployee = selectedEmployee, todos = [], oneOnOnes = [] }, getOneOnOnesAndTodosForSelectedEmployee selectedEmployee )
+                    ( Success { oldModelContent | selectedEmployee = selectedEmployee, todos = [], oneOnOnes = [] }, getContentsForSelectedEmployee selectedEmployee )
 
                 other ->
                     ( other, Cmd.none )
@@ -165,6 +187,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ Html.node "link" [ Html.Attributes.rel "stylesheet", Html.Attributes.href "style.css" ] []
+        , Html.node "link" [ Html.Attributes.rel "stylesheet", Html.Attributes.href "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" ] []
         , case model of
             Loading ->
                 text "Lade.."
@@ -179,7 +202,7 @@ view model =
                 else
                     div [ class "main" ]
                         [ div [ class "left-sidebar" ] (getLeftSidebarContent modelContent.employees modelContent.todos modelContent.selectedEmployee)
-                        , div [ class "content-area" ] (getContentAreaContent modelContent.oneOnOnes modelContent.selectedEmployee)
+                        , div [ class "content-area" ] (getContentAreaContent modelContent.oneOnOnes modelContent.topicSuggestions modelContent.selectedEmployee)
                         ]
         ]
 
@@ -289,8 +312,8 @@ getTodoPresentation todo =
     div [ classList [ ( "todo", True ), todoStateClass, todoTargetClass ] ] [ input [ value todo.text ] [], input [ placeholder "Notiz", value maybeNote ] [] ]
 
 
-getContentAreaContent : OneOnOnes -> SelectedEmployee -> List (Html Msg)
-getContentAreaContent oneOnOnes selectedEmployee =
+getContentAreaContent : OneOnOnes -> TopicSuggestions -> SelectedEmployee -> List (Html Msg)
+getContentAreaContent oneOnOnes topicSuggestions selectedEmployee =
     case selectedEmployee of
         Nothing ->
             [ text "Wähle einen Mitarbeiter, um eure bisherigen One-on-Ones anzuzeigen" ]
@@ -300,6 +323,9 @@ getContentAreaContent oneOnOnes selectedEmployee =
                 addOneOnOneButton =
                     button [ class "outlined" ] [ text "Neues One-on-One hinzufügen" ]
 
+                addTopicSuggestionsButton =
+                    button [ class "outlined" ] [ text "Neuen Vorschlag hinzufügen" ]
+
                 oneOnOnesContent =
                     case oneOnOnes of
                         [] ->
@@ -307,8 +333,18 @@ getContentAreaContent oneOnOnes selectedEmployee =
 
                         _ ->
                             getOneOnOnesPresentations oneOnOnes
+
+                topicSuggestionsContent =
+                    case topicSuggestions of
+                        [] ->
+                            [ text "Keine Vorschläge :(" ]
+
+                        _ ->
+                            getTopicSuggestionsPresentation topicSuggestions
             in
-            [ div [ class "one-on-ones" ] (addOneOnOneButton :: oneOnOnesContent), div [ class "topic-suggestions" ] topicSuggestionsContent ]
+            [ div [ class "one-on-ones" ] (addOneOnOneButton :: oneOnOnesContent)
+            , div [ class "topic-suggestions" ] (addTopicSuggestionsButton :: topicSuggestionsContent)
+            ]
 
 
 getOneOnOnesPresentations : OneOnOnes -> List (Html Msg)
@@ -340,9 +376,26 @@ getTopicPresentation topic =
     div [ class "topic", class topicClass ] [ input [ class "question", value topic.question ] [], textarea [ class "answer", value topic.answer ] [] ]
 
 
-topicSuggestionsContent : List (Html Msg)
-topicSuggestionsContent =
-    [ button [ class "outlined" ] [ text "Neuen Vorschlag hinzufügen" ], text "Keine Vorschläge :(" ]
+getTopicSuggestionsPresentation : TopicSuggestions -> List (Html Msg)
+getTopicSuggestionsPresentation topicSuggestions =
+    List.map getTopicSuggestionPresentation topicSuggestions
+
+
+getTopicSuggestionPresentation : TopicSuggestion -> Html Msg
+getTopicSuggestionPresentation topicSuggestion =
+    let
+        lastAskedString =
+            case topicSuggestion.lastAsked of
+                Nothing ->
+                    "-"
+
+                Just date ->
+                    toDateString date
+
+        addButton =
+            button [ class "material-symbols-outlined" ] [ text "add_circle" ]
+    in
+    div [ class "topic-suggestion" ] [ addButton, text (topicSuggestion.suggestedQuestion ++ " (Zuletzt: " ++ lastAskedString ++ ")") ]
 
 
 toDateString : DateTime -> String
@@ -421,17 +474,28 @@ employeeDecoder =
     Json.Decode.map2 Employee (Json.Decode.field "name" Json.Decode.string) (Json.Decode.field "id" Json.Decode.int)
 
 
-getOneOnOnesAndTodosForSelectedEmployee : SelectedEmployee -> Cmd Msg
-getOneOnOnesAndTodosForSelectedEmployee selectedEmployee =
+getContentsForSelectedEmployee : SelectedEmployee -> Cmd Msg
+getContentsForSelectedEmployee selectedEmployee =
     case selectedEmployee of
         Just employee ->
             Cmd.batch
                 [ Http.get { url = baseUrl ++ "/employee/" ++ String.fromInt employee.id ++ "/oneOnOnes", expect = Http.expectJson GotOneOnOnes oneOnOnesDecoder }
                 , Http.get { url = baseUrl ++ "/employee/" ++ String.fromInt employee.id ++ "/todos", expect = Http.expectJson GotTodos todosDecoder }
+                , Http.get { url = baseUrl ++ "/employee/" ++ String.fromInt employee.id ++ "/topicSuggestions", expect = Http.expectJson GotTopicSuggestions topicSuggestionsDecoder }
                 ]
 
         Nothing ->
             Cmd.none
+
+
+topicSuggestionsDecoder : Json.Decode.Decoder TopicSuggestions
+topicSuggestionsDecoder =
+    Json.Decode.list topicSuggestionDecoder
+
+
+topicSuggestionDecoder : Json.Decode.Decoder TopicSuggestion
+topicSuggestionDecoder =
+    Json.Decode.map2 TopicSuggestion (Json.Decode.field "suggestedQuestion" Json.Decode.string) (Json.Decode.maybe (dateTimeDecoder "lastAsked"))
 
 
 todosDecoder : Json.Decode.Decoder Todos
@@ -471,12 +535,12 @@ oneOnOnesDecoder =
 
 oneOnOneDecoder : Json.Decode.Decoder OneOnOne
 oneOnOneDecoder =
-    Json.Decode.map3 OneOnOne (Json.Decode.field "employeeId" Json.Decode.int) dateTimeDecoder (Json.Decode.field "topics" topicsDecoder)
+    Json.Decode.map3 OneOnOne (Json.Decode.field "employeeId" Json.Decode.int) (dateTimeDecoder "date") (Json.Decode.field "topics" topicsDecoder)
 
 
-dateTimeDecoder : Json.Decode.Decoder DateTime
-dateTimeDecoder =
-    Json.Decode.field "date" Json.Decode.int
+dateTimeDecoder : String -> Json.Decode.Decoder DateTime
+dateTimeDecoder fieldname =
+    Json.Decode.field fieldname Json.Decode.int
         |> Json.Decode.andThen
             (\value ->
                 succeed ( Time.millisToPosix value, Time.utc )

@@ -52,9 +52,17 @@ data OneOnOne = OneOnOne
     
 $(deriveJSON defaultOptions ''OneOnOne)
 
+data TopicSuggestion = TopicSuggestion
+    { suggestedQuestion :: String
+    , lastAsked :: Maybe Int
+    } deriving (Eq, Show)
+
+$(deriveJSON defaultOptions ''TopicSuggestion)
+
 type API = "employees" :> Get '[JSON] [Employee]
         :<|> "employee" :> Capture "employeeId" Int :> "oneOnOnes" :> Get '[JSON] [OneOnOne]
         :<|> "employee" :> Capture "employeeId" Int :> "todos" :> Get '[JSON] [Todo]
+        :<|> "employee" :> Capture "employeeId" Int :> "topicSuggestions" :> Get '[JSON] [TopicSuggestion]
 
 startApp :: IO ()
 startApp = run 8080 app
@@ -69,6 +77,7 @@ server :: Server API
 server = return employees
       :<|> oneOnOnes
       :<|> todos
+      :<|> topicSuggestions
 
 employees :: [Employee]
 employees = [ Employee 1 "Johannes Klepp"
@@ -88,3 +97,8 @@ todos 1 = return [Todo "Mit Tessa über kommende Projekte sprechen" Open Nothing
                   Todo "Buchempfehlung als Link schicken" Discarded (Just "Nicht mehr relevant") Enums.Employee]
 todos 2 = return [Todo "Peter nach Codequalität fragen" Open Nothing Enums.Manager]
 todos _ = return []
+
+topicSuggestions :: Int -> Handler [TopicSuggestion]
+topicSuggestions 1 = return [TopicSuggestion "Was sind die größten Herausforderungen in deinem Job?" (Just 1645225200000)]
+topicSuggestions 3 = return [TopicSuggestion "Welche Fähigkeiten würdest du gerne lernen / verbessern?" Nothing, TopicSuggestion "Was sind die größten Herausforderungen in deinem Job?" (Just 1645225200000)]
+topicSuggestions _ = return []

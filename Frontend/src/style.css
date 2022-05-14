@@ -39,6 +39,10 @@ button.text:hover,
 select.text:hover {
   color: inherit;
 }
+button.material-symbols-outlined {
+  background: none;
+  padding: 0 1rem 0 0;
+}
 .content-control {
   border-radius: 0.5rem;
   padding: 1rem;
@@ -93,7 +97,8 @@ select.text:hover {
   flex-direction: column;
   flex-grow: 2;
 }
-.one-on-one {
+.one-on-one,
+.topic-suggestion {
   border-radius: 0.5rem;
   padding: 1rem;
   background-color: #f2f2f2;
@@ -109,15 +114,13 @@ select.text:hover {
   gap: 1rem;
   flex-direction: column;
 }
-.manager-topic::before,
-.manager-todo::before {
+.manager-topic,
+.manager-todo {
   background-color: red;
-  content: "M"
 }
-.employee-topic::before,
-.employee-todo::before {
-  background-color: cornflowerblue;
-  content: "E";
+.employee-topic,
+.employee-todo {
+  background-color: blue;
 }
 .question {
   border-bottom: solid 1px #cccccc;
